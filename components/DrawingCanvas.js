@@ -41,8 +41,22 @@ export default function DrawingCanvas() {
         schema: 'public', 
         table: 'pixels' 
       }, (payload) => {
-        if (payload.eventType === 'INSERT') {
-          setPixels(prev => [...prev, payload.new]);
+        console.log('Received payload:', payload);
+        if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+          // Update the specific pixel in the local state
+          setPixels(prev => {
+            const existingPixelIndex = prev.findIndex(p => 
+              p.id === payload.new.id
+            );
+            
+            if (existingPixelIndex >= 0) {
+              // Replace existing pixel
+              return prev.map(p => p.id === payload.new.id ? payload.new : p);
+            } else {
+              // Add new pixel
+              return [...prev, payload.new];
+            }
+          });
         }
       })
       .subscribe();
@@ -112,38 +126,66 @@ export default function DrawingCanvas() {
     const x = Math.floor((e.clientX - rect.left) / pixelSize);
     const y = Math.floor((e.clientY - rect.top) / pixelSize);
     
-    // Check if this pixel already exists
-    const pixelExists = pixels.some(p => p.x === x && p.y === y);
-
-    
-    
-    if (!pixelExists) {
-      setSelectedPixel({ x, y });
-    }
+    // Allow selection regardless of whether a pixel exists
+    setSelectedPixel({ x, y });
   };
   
   const confirmPixel = async () => {
     if (!selectedPixel || !user) return;
 
-    
     try {
-      const { error } = await supabase
-        .from('pixels')
-        .insert([
-          { 
-            x: selectedPixel.x, 
-            y: selectedPixel.y, 
-            user_id: user.id ,
-            color: color,
-          }
-        ]);
-        
-      if (error) throw error;
+      console.log('Confirming pixel:', selectedPixel, color);
+      console.log('User ID:', user.id, 'Type:', typeof user.id);
       
-      // Clear selection after successful insertion
+      // Call the Supabase function to update the pixel
+      const { data, error } = await supabase.rpc('update_pixel', {
+        pixel_x: selectedPixel.x,
+        pixel_y: selectedPixel.y,
+        new_color: color,
+        user_uuid: user.id
+      });
+      
+      if (error) {
+        console.error('Error updating pixel:', error);
+        throw error;
+      }
+      
+      console.log('Response from update_pixel:', data);
+      
+      if (data && data.success) {
+        console.log('Pixel updated successfully:', data.pixel);
+        
+        // Update the local state with the updated pixel
+        setPixels(prev => {
+          const existingPixelIndex = prev.findIndex(p => 
+            p.x === selectedPixel.x && p.y === selectedPixel.y
+          );
+          
+          if (existingPixelIndex >= 0) {
+            // Replace existing pixel
+            return prev.map((p, i) => i === existingPixelIndex ? data.pixel : p);
+          } else {
+            // Add new pixel
+            return [...prev, data.pixel];
+          }
+        });
+        
+        // Also fetch all pixels to ensure we have the latest data
+        const { data: refreshedPixels, error: refreshError } = await supabase
+          .from('pixels')
+          .select('*');
+          
+        if (!refreshError && refreshedPixels) {
+          setPixels(refreshedPixels);
+        }
+      } else {
+        console.error('Error updating pixel:', data?.error || 'Unknown error');
+      }
+      
+      // Clear selection after operation
       setSelectedPixel(null);
     } catch (error) {
-      console.error('Error adding pixel:', error);
+      console.error('Error updating pixel:', error);
     }
   };
   
