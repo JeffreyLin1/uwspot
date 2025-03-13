@@ -3,14 +3,18 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
+import { SketchPicker } from 'react-color';
+import ColorPicker from './ColorPicker';
 
 export default function DrawingCanvas() {
   const { user } = useAuth();
   const canvasRef = useRef(null);
   const [pixels, setPixels] = useState([]);
   const [selectedPixel, setSelectedPixel] = useState(null);
+  const [color, setColor] = useState('rgb(0, 0, 0)');
   const [canvasSize, setCanvasSize] = useState({ width: 800, height: 600 });
   const [pixelSize, setPixelSize] = useState(10);
+
   
   // Load existing pixels from Supabase
   useEffect(() => {
@@ -78,19 +82,19 @@ export default function DrawingCanvas() {
     }
     
     // Draw existing pixels
-    ctx.fillStyle = 'black';
     pixels.forEach(pixel => {
+      ctx.fillStyle = pixel.color || 'black'; // Default to black if no color specified
       ctx.fillRect(
-        pixel.x * pixelSize, 
-        pixel.y * pixelSize, 
-        pixelSize, 
-        pixelSize
+      pixel.x * pixelSize, 
+      pixel.y * pixelSize, 
+      pixelSize, 
+      pixelSize
       );
     });
     
     // Draw selected pixel with highlight
     if (selectedPixel) {
-      ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
+      ctx.fillStyle = color;
       ctx.fillRect(
         selectedPixel.x * pixelSize,
         selectedPixel.y * pixelSize,
@@ -110,6 +114,8 @@ export default function DrawingCanvas() {
     
     // Check if this pixel already exists
     const pixelExists = pixels.some(p => p.x === x && p.y === y);
+
+    
     
     if (!pixelExists) {
       setSelectedPixel({ x, y });
@@ -118,6 +124,7 @@ export default function DrawingCanvas() {
   
   const confirmPixel = async () => {
     if (!selectedPixel || !user) return;
+
     
     try {
       const { error } = await supabase
@@ -126,7 +133,8 @@ export default function DrawingCanvas() {
           { 
             x: selectedPixel.x, 
             y: selectedPixel.y, 
-            user_id: user.id 
+            user_id: user.id ,
+            color: color,
           }
         ]);
         
@@ -154,15 +162,26 @@ export default function DrawingCanvas() {
           className="cursor-pointer"
         />
       </div>
+
+      <div className="mt-4">
+        <ColorPicker onChange={setColor} />
+      </div>
+
       
       {selectedPixel && user && (
         <div className="mt-4 flex space-x-4">
+
+
+
           <button
             onClick={confirmPixel}
             className="rounded-md bg-amber-500 px-4 py-2 text-black hover:bg-amber-600"
           >
             Confirm Pixel
           </button>
+
+
+
           <button
             onClick={cancelSelection}
             className="rounded-md border border-amber-500 px-4 py-2 text-amber-700 hover:bg-amber-50"
