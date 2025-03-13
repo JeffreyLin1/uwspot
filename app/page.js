@@ -1,6 +1,7 @@
 'use client';
 
 import Navbar from "@/components/Navbar";
+import DrawingCanvas from "@/components/DrawingCanvas";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
 
@@ -15,13 +16,17 @@ export default function Home() {
         <div className="max-w-2xl text-center">
           <h1 className="text-5xl font-bold text-amber-600">UWSpot</h1>
           
+          <div className="mt-8">
+            <DrawingCanvas />
+          </div>
+          
           {loading ? (
             <p className="mt-4 text-gray-700">Loading...</p>
           ) : user ? (
             <div className="mt-6">
               <p className="text-xl text-gray-800">You are signed in as {user.email}</p>
               <p className="mt-4 text-gray-700">
-                Start building your authenticated experience here!
+                Click on the canvas to place a pixel!
               </p>
             </div>
           ) : (
