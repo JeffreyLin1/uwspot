@@ -1,8 +1,12 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #fffbeb;
+  --foreground: #1a1a1a;
+  --primary: #fbbf24;
+  --primary-dark: #f59e0b;
+  --primary-light: #fcd34d;
+  --accent: #000000;
 }
 
 @theme inline {
@@ -12,11 +16,15 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Remove the media query that applies dark mode based on user preferences */
+/* Instead, only apply dark styles when .dark class is explicitly added */
+.dark {
+  --background: #1a1a1a;
+  --foreground: #fffbeb;
+  --primary: #f59e0b;
+  --primary-dark: #d97706;
+  --primary-light: #fbbf24;
+  --accent: #fcd34d;
 }
 
 body {
