@@ -77,32 +77,14 @@ export default function DrawingCanvas() {
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, canvasSize.width, canvasSize.height);
     
-    // Draw grid
-    ctx.strokeStyle = '#eee';
-    ctx.lineWidth = 1;
-    
-    for (let x = 0; x <= canvasSize.width; x += pixelSize) {
-      ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, canvasSize.height);
-      ctx.stroke();
-    }
-    
-    for (let y = 0; y <= canvasSize.height; y += pixelSize) {
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(canvasSize.width, y);
-      ctx.stroke();
-    }
-    
     // Draw existing pixels
     pixels.forEach(pixel => {
       ctx.fillStyle = pixel.color || 'black'; // Default to black if no color specified
       ctx.fillRect(
-      pixel.x * pixelSize, 
-      pixel.y * pixelSize, 
-      pixelSize, 
-      pixelSize
+        pixel.x * pixelSize, 
+        pixel.y * pixelSize, 
+        pixelSize, 
+        pixelSize
       );
     });
     
@@ -116,7 +98,7 @@ export default function DrawingCanvas() {
         pixelSize
       );
     }
-  }, [pixels, selectedPixel, canvasSize, pixelSize]);
+  }, [pixels, selectedPixel, canvasSize, pixelSize, color]);
   
   const handleCanvasClick = (e) => {
     if (!user) return; // Only authenticated users can select pixels
