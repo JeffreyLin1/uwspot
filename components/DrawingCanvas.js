@@ -14,7 +14,7 @@ export default function DrawingCanvas() {
   const [canvasSize, setCanvasSize] = useState({ width: 2000, height: 2000 });
   const [pixelSize, setPixelSize] = useState(10);
   const [hoverPixel, setHoverPixel] = useState(null);
-
+//aa
   // Predefined color palette
   const colorPalette = [
     '#000000', // Black
