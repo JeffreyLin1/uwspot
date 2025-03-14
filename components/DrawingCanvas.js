@@ -12,7 +12,7 @@ export default function DrawingCanvas() {
   const [pixels, setPixels] = useState([]);
   const [selectedPixel, setSelectedPixel] = useState(null);
   const [color, setColor] = useState('rgb(0, 0, 0)');
-  const [canvasSize, setCanvasSize] = useState({ width: 800, height: 600 });
+  const [canvasSize, setCanvasSize] = useState({ width: 800, height: 800 });
   const [pixelSize, setPixelSize] = useState(10);
 
   
@@ -41,6 +41,7 @@ export default function DrawingCanvas() {
         schema: 'public', 
         table: 'pixels' 
       }, (payload) => {
+
         console.log('Received payload:', payload);
         if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
           // Update the specific pixel in the local state
@@ -77,23 +78,6 @@ export default function DrawingCanvas() {
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, canvasSize.width, canvasSize.height);
     
-    // Draw grid
-    ctx.strokeStyle = '#eee';
-    ctx.lineWidth = 1;
-    
-    for (let x = 0; x <= canvasSize.width; x += pixelSize) {
-      ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, canvasSize.height);
-      ctx.stroke();
-    }
-    
-    for (let y = 0; y <= canvasSize.height; y += pixelSize) {
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(canvasSize.width, y);
-      ctx.stroke();
-    }
     
     // Draw existing pixels
     pixels.forEach(pixel => {
@@ -116,7 +100,7 @@ export default function DrawingCanvas() {
         pixelSize
       );
     }
-  }, [pixels, selectedPixel, canvasSize, pixelSize]);
+  }, [pixels, selectedPixel, canvasSize, pixelSize, color]);
   
   const handleCanvasClick = (e) => {
     if (!user) return; // Only authenticated users can select pixels
@@ -154,35 +138,8 @@ export default function DrawingCanvas() {
       
       if (data && data.success) {
         console.log('Pixel updated successfully:', data.pixel);
-        
-        // Update the local state with the updated pixel
-        setPixels(prev => {
-          const existingPixelIndex = prev.findIndex(p => 
-            p.x === selectedPixel.x && p.y === selectedPixel.y
-          );
-          
-          if (existingPixelIndex >= 0) {
-            // Replace existing pixel
-            return prev.map((p, i) => i === existingPixelIndex ? data.pixel : p);
-          } else {
-            // Add new pixel
-            return [...prev, data.pixel];
-          }
-        });
-        
-        // Also fetch all pixels to ensure we have the latest data
-        const { data: refreshedPixels, error: refreshError } = await supabase
-          .from('pixels')
-          .select('*');
-          
-        if (!refreshError && refreshedPixels) {
-          setPixels(refreshedPixels);
-        }
-      } else {
-        console.error('Error updating pixel:', data?.error || 'Unknown error');
       }
-      
-      // Clear selection after operation
+
       setSelectedPixel(null);
     } catch (error) {
       console.error('Error updating pixel:', error);
