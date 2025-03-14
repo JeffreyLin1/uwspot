@@ -11,7 +11,7 @@ export default function DrawingCanvas() {
   const [pixels, setPixels] = useState([]);
   const [selectedPixel, setSelectedPixel] = useState(null);
   const [selectedPixelPosition, setSelectedPixelPosition] = useState(null); // Track screen position
-  const [color, setColor] = useState('rgb(0, 0, 0)');
+  const [color, setColor] = useState('#ff0000');
   const [canvasSize, setCanvasSize] = useState({ width: 800, height: 800 });
   const [pixelSize, setPixelSize] = useState(10);
   const [hoverPixel, setHoverPixel] = useState(null);
