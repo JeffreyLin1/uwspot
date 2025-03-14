@@ -3,18 +3,33 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
-import ColorPicker from './ColorPicker';
 
 export default function DrawingCanvas() {
   const { user } = useAuth();
   const canvasRef = useRef(null);
   const [pixels, setPixels] = useState([]);
   const [selectedPixel, setSelectedPixel] = useState(null);
-  const [selectedPixelPosition, setSelectedPixelPosition] = useState(null); // Track screen position
+  const [selectedPixelPosition, setSelectedPixelPosition] = useState(null);
   const [color, setColor] = useState('#ff0000');
-  const [canvasSize, setCanvasSize] = useState({ width: 800, height: 800 });
+  const [canvasSize, setCanvasSize] = useState({ width: 2000, height: 2000 });
   const [pixelSize, setPixelSize] = useState(10);
   const [hoverPixel, setHoverPixel] = useState(null);
+
+  // Predefined color palette
+  const colorPalette = [
+    '#000000', // Black
+    '#FFFFFF', // White
+    '#FF0000', // Red
+    '#00FF00', // Green
+    '#0000FF', // Blue
+    '#FFFF00', // Yellow
+    '#FF00FF', // Magenta
+    '#00FFFF', // Cyan
+    '#FFA500', // Orange
+    '#800080', // Purple
+    '#008000', // Dark Green
+    '#A52A2A', // Brown
+  ];
 
   // Load existing pixels from Supabase
   useEffect(() => {
@@ -102,7 +117,7 @@ export default function DrawingCanvas() {
     // Draw hover preview
     if (hoverPixel && !selectedPixel && user) {
       ctx.fillStyle = color;
-      ctx.globalAlpha = 1; // Make it semi-transparent
+      ctx.globalAlpha = 1; 
       ctx.fillRect(
         hoverPixel.x * pixelSize,
         hoverPixel.y * pixelSize,
@@ -121,21 +136,19 @@ export default function DrawingCanvas() {
     const x = Math.floor((e.clientX - rect.left) / pixelSize);
     const y = Math.floor((e.clientY - rect.top) / pixelSize);
     
-    // Calculate the screen position for the popup
-    const pixelScreenX = rect.left + (x * pixelSize);
-    const pixelScreenY = rect.top + (y * pixelSize);
-    
-    // Allow selection regardless of whether a pixel exists
+    // Set the selected pixel and its position
     setSelectedPixel({ x, y });
-    setSelectedPixelPosition({ x: pixelScreenX, y: pixelScreenY });
+    setSelectedPixelPosition({
+      x: e.clientX,
+      y: e.clientY
+    });
   };
   
   const confirmPixel = async () => {
     if (!selectedPixel || !user) return;
 
     try {
-      console.log('Confirming pixel:', selectedPixel, color);
-      console.log('User ID:', user.id, 'Type:', typeof user.id);
+      console.log('Placing pixel at:', selectedPixel.x, selectedPixel.y, 'with color:', color);
       
       // Call the Supabase function to update the pixel
       const { data, error } = await supabase.rpc('update_pixel', {
@@ -150,12 +163,11 @@ export default function DrawingCanvas() {
         throw error;
       }
       
-      console.log('Response from update_pixel:', data);
-      
       if (data && data.success) {
         console.log('Pixel updated successfully:', data.pixel);
       }
-
+      
+      // Clear selection
       setSelectedPixel(null);
       setSelectedPixelPosition(null);
     } catch (error) {
@@ -185,6 +197,24 @@ export default function DrawingCanvas() {
   
   return (
     <div className="flex flex-col items-center relative">
+      {/* Color palette header */}
+      <div className="w-full mb-2 p-2 bg-white border border-amber-300 rounded-t-md shadow-sm">
+        <div className="flex flex-wrap justify-center gap-2">
+          {colorPalette.map((paletteColor) => (
+            <button
+              key={paletteColor}
+              className={`w-8 h-8 rounded-md border ${
+                color === paletteColor ? 'border-black border-2' : 'border-gray-300'
+              }`}
+              style={{ backgroundColor: paletteColor }}
+              onClick={() => setColor(paletteColor)}
+              aria-label={`Select ${paletteColor} color`}
+            />
+          ))}
+        </div>
+      </div>
+      
+      {/* Canvas */}
       <div className="border border-amber-300 bg-white">
         <canvas
           ref={canvasRef}
@@ -196,36 +226,32 @@ export default function DrawingCanvas() {
           className="cursor-pointer"
         />
       </div>
-
-      {/* Popup for color picker and buttons */}
+      
+      {/* Simple confirmation popup */}
       {selectedPixel && selectedPixelPosition && user && (
         <div 
-          className="absolute z-10 bg-white border border-amber-300 rounded-md shadow-lg p-4"
+          className="absolute z-10 bg-white border border-gray-300 rounded-md shadow-sm p-1 flex"
           style={{
-            left: `${selectedPixelPosition.x}px`, 
-            top: `${selectedPixelPosition.y}px`,
-            transform: 'translate(-180%, -50%)'
+            left: `${selectedPixel.x * pixelSize + pixelSize/2}px`, 
+            top: `${selectedPixel.y * pixelSize + pixelSize/2}px`,
+            transform: 'translate(-50%, -50%)'
           }}
         >
-          <div className="mb-4">
-            <ColorPicker onChange={setColor} />
-          </div>
+          <button
+            onClick={confirmPixel}
+            className="w-6 h-6 rounded-sm bg-gray-200 text-gray-700 flex items-center justify-center mr-1 hover:bg-gray-300"
+            aria-label="Confirm pixel placement"
+          >
+            ✓
+          </button>
           
-          <div className="flex space-x-2">
-            <button
-              onClick={confirmPixel}
-              className="rounded-md bg-amber-500 px-4 py-2 text-black hover:bg-amber-600"
-            >
-              Confirm
-            </button>
-            
-            <button
-              onClick={cancelSelection}
-              className="rounded-md border border-amber-500 px-4 py-2 text-amber-700 hover:bg-amber-50"
-            >
-              Cancel
-            </button>
-          </div>
+          <button
+            onClick={cancelSelection}
+            className="w-6 h-6 rounded-sm bg-gray-200 text-gray-700 flex items-center justify-center hover:bg-gray-300"
+            aria-label="Cancel pixel placement"
+          >
+            ✕
+          </button>
         </div>
       )}
       
