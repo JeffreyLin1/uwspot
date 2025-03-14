@@ -83,10 +83,10 @@ export default function DrawingCanvas() {
     pixels.forEach(pixel => {
       ctx.fillStyle = pixel.color || 'black'; // Default to black if no color specified
       ctx.fillRect(
-      pixel.x * pixelSize, 
-      pixel.y * pixelSize, 
-      pixelSize, 
-      pixelSize
+        pixel.x * pixelSize, 
+        pixel.y * pixelSize, 
+        pixelSize, 
+        pixelSize
       );
     });
     
@@ -100,6 +100,7 @@ export default function DrawingCanvas() {
         pixelSize
       );
     }
+  }, [pixels, selectedPixel, canvasSize, pixelSize, color]);
   }, [pixels, selectedPixel, canvasSize, pixelSize, color]);
   
   const handleCanvasClick = (e) => {
