@@ -101,7 +101,6 @@ export default function DrawingCanvas() {
       );
     }
   }, [pixels, selectedPixel, canvasSize, pixelSize, color]);
-  }, [pixels, selectedPixel, canvasSize, pixelSize, color]);
   
   const handleCanvasClick = (e) => {
     if (!user) return; // Only authenticated users can select pixels
