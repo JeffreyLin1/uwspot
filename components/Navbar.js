@@ -21,7 +21,7 @@ export default function Navbar() {
     if (!user) return;
 
     // Create a unique channel for this user
-    const channel = supabase.channel(`presence:${user.id}`, {
+    const channel = supabase.channel(`presence`, {
       config: {
         presence: {
           key: user.id,
