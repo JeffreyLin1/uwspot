@@ -41,7 +41,6 @@ export default function DrawingCanvas() {
         schema: 'public', 
         table: 'pixels' 
       }, (payload) => {
-
         console.log('Received payload:', payload);
         if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
           // Update the specific pixel in the local state
