@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
-import { SketchPicker } from 'react-color';
 import ColorPicker from './ColorPicker';
 
 export default function DrawingCanvas() {
@@ -11,11 +10,12 @@ export default function DrawingCanvas() {
   const canvasRef = useRef(null);
   const [pixels, setPixels] = useState([]);
   const [selectedPixel, setSelectedPixel] = useState(null);
+  const [selectedPixelPosition, setSelectedPixelPosition] = useState(null); // Track screen position
   const [color, setColor] = useState('rgb(0, 0, 0)');
   const [canvasSize, setCanvasSize] = useState({ width: 800, height: 800 });
   const [pixelSize, setPixelSize] = useState(10);
+  const [hoverPixel, setHoverPixel] = useState(null);
 
-  
   // Load existing pixels from Supabase
   useEffect(() => {
     const fetchPixels = async () => {
@@ -77,7 +77,6 @@ export default function DrawingCanvas() {
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, canvasSize.width, canvasSize.height);
     
-    
     // Draw existing pixels
     pixels.forEach(pixel => {
       ctx.fillStyle = pixel.color || 'black'; // Default to black if no color specified
@@ -99,7 +98,20 @@ export default function DrawingCanvas() {
         pixelSize
       );
     }
-  }, [pixels, selectedPixel, canvasSize, pixelSize, color]);
+    
+    // Draw hover preview
+    if (hoverPixel && !selectedPixel && user) {
+      ctx.fillStyle = color;
+      ctx.globalAlpha = 1; // Make it semi-transparent
+      ctx.fillRect(
+        hoverPixel.x * pixelSize,
+        hoverPixel.y * pixelSize,
+        pixelSize,
+        pixelSize
+      );
+      ctx.globalAlpha = 1.0; // Reset transparency
+    }
+  }, [pixels, selectedPixel, hoverPixel, canvasSize, pixelSize, color, user]);
   
   const handleCanvasClick = (e) => {
     if (!user) return; // Only authenticated users can select pixels
@@ -109,8 +121,13 @@ export default function DrawingCanvas() {
     const x = Math.floor((e.clientX - rect.left) / pixelSize);
     const y = Math.floor((e.clientY - rect.top) / pixelSize);
     
+    // Calculate the screen position for the popup
+    const pixelScreenX = rect.left + (x * pixelSize);
+    const pixelScreenY = rect.top + (y * pixelSize);
+    
     // Allow selection regardless of whether a pixel exists
     setSelectedPixel({ x, y });
+    setSelectedPixelPosition({ x: pixelScreenX, y: pixelScreenY });
   };
   
   const confirmPixel = async () => {
@@ -140,6 +157,7 @@ export default function DrawingCanvas() {
       }
 
       setSelectedPixel(null);
+      setSelectedPixelPosition(null);
     } catch (error) {
       console.error('Error updating pixel:', error);
     }
@@ -147,45 +165,67 @@ export default function DrawingCanvas() {
   
   const cancelSelection = () => {
     setSelectedPixel(null);
+    setSelectedPixelPosition(null);
+  };
+  
+  const handleCanvasMouseMove = (e) => {
+    if (!user || selectedPixel) return; // Only show hover when not selecting and user is logged in
+    
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    const x = Math.floor((e.clientX - rect.left) / pixelSize);
+    const y = Math.floor((e.clientY - rect.top) / pixelSize);
+    
+    setHoverPixel({ x, y });
+  };
+
+  const handleCanvasMouseLeave = () => {
+    setHoverPixel(null);
   };
   
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col items-center relative">
       <div className="border border-amber-300 bg-white">
         <canvas
           ref={canvasRef}
           width={canvasSize.width}
           height={canvasSize.height}
           onClick={handleCanvasClick}
+          onMouseMove={handleCanvasMouseMove}
+          onMouseLeave={handleCanvasMouseLeave}
           className="cursor-pointer"
         />
       </div>
 
-      <div className="mt-4">
-        <ColorPicker onChange={setColor} />
-      </div>
-
-      
-      {selectedPixel && user && (
-        <div className="mt-4 flex space-x-4">
-
-
-
-          <button
-            onClick={confirmPixel}
-            className="rounded-md bg-amber-500 px-4 py-2 text-black hover:bg-amber-600"
-          >
-            Confirm Pixel
-          </button>
-
-
-
-          <button
-            onClick={cancelSelection}
-            className="rounded-md border border-amber-500 px-4 py-2 text-amber-700 hover:bg-amber-50"
-          >
-            Cancel
-          </button>
+      {/* Popup for color picker and buttons */}
+      {selectedPixel && selectedPixelPosition && user && (
+        <div 
+          className="absolute z-10 bg-white border border-amber-300 rounded-md shadow-lg p-4"
+          style={{
+            left: `${selectedPixelPosition.x}px`, 
+            top: `${selectedPixelPosition.y}px`,
+            transform: 'translate(-180%, -50%)'
+          }}
+        >
+          <div className="mb-4">
+            <ColorPicker onChange={setColor} />
+          </div>
+          
+          <div className="flex space-x-2">
+            <button
+              onClick={confirmPixel}
+              className="rounded-md bg-amber-500 px-4 py-2 text-black hover:bg-amber-600"
+            >
+              Confirm
+            </button>
+            
+            <button
+              onClick={cancelSelection}
+              className="rounded-md border border-amber-500 px-4 py-2 text-amber-700 hover:bg-amber-50"
+            >
+              Cancel
+            </button>
+          </div>
         </div>
       )}
       
