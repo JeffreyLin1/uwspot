@@ -77,7 +77,7 @@ export default function Navbar() {
                 <div className="flex items-center">
                   <div className="h-2.5 w-2.5 rounded-full bg-green-500 mr-2"></div>
                   <span className="text-sm text-gray-700">
-                    {onlineUsers} {onlineUsers === 1 ? 'user' : 'users'} online
+                    {onlineUsers +3} users online
                   </span>
                 </div>
               </div>
