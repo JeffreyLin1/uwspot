@@ -16,7 +16,7 @@ export default function DrawingCanvas() {
   const [pixelSize, setPixelSize] = useState(10);
   const [hoverPixel, setHoverPixel] = useState(null);
 
-
+//sss
   // Predefined color palette
   const colorPalette = [
     '#000000', // Black
