@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
+import ColorPicker from '@/components/ColorPicker';
 
 export default function DrawingCanvas() {
   const { user } = useAuth();
@@ -11,10 +12,11 @@ export default function DrawingCanvas() {
   const [selectedPixel, setSelectedPixel] = useState(null);
   const [selectedPixelPosition, setSelectedPixelPosition] = useState(null);
   const [color, setColor] = useState('#ff0000');
-  const [canvasSize, setCanvasSize] = useState({ width: 2000, height: 2000 });
+  const [canvasSize, setCanvasSize] = useState({ width: 1650, height: 2000 });
   const [pixelSize, setPixelSize] = useState(10);
   const [hoverPixel, setHoverPixel] = useState(null);
-//aa
+
+
   // Predefined color palette
   const colorPalette = [
     '#000000', // Black
@@ -94,7 +96,7 @@ export default function DrawingCanvas() {
     
     // Draw existing pixels
     pixels.forEach(pixel => {
-      ctx.fillStyle = pixel.color || 'black'; // Default to black if no color specified
+      ctx.fillStyle = pixel.color || 'white'; // Default to black if no color specified
       ctx.fillRect(
         pixel.x * pixelSize, 
         pixel.y * pixelSize, 
@@ -157,6 +159,8 @@ export default function DrawingCanvas() {
         new_color: color,
         user_uuid: user.id
       });
+
+      console.log(data);
       
       if (error) {
         console.error('Error updating pixel:', error);
@@ -166,6 +170,20 @@ export default function DrawingCanvas() {
       if (data && data.success) {
         console.log('Pixel updated successfully:', data.pixel);
       }
+
+      // Update the pixel in the local state
+      setPixels(prev => {
+        const existingPixelIndex = prev.findIndex(p =>
+          p.x === selectedPixel.x && p.y === selectedPixel.y
+        );
+        if (existingPixelIndex >= 0) {
+          const newPixels = [...prev];
+          newPixels[existingPixelIndex] = { ...prev[existingPixelIndex], color };
+          return newPixels;
+        }
+        // Add new pixel
+        return [...prev, { x: selectedPixel.x, y: selectedPixel.y, color }];
+      });
       
       // Clear selection
       setSelectedPixel(null);
@@ -179,6 +197,7 @@ export default function DrawingCanvas() {
     setSelectedPixel(null);
     setSelectedPixelPosition(null);
   };
+  
   
   const handleCanvasMouseMove = (e) => {
     if (!user || selectedPixel) return; // Only show hover when not selecting and user is logged in
@@ -197,22 +216,8 @@ export default function DrawingCanvas() {
   
   return (
     <div className="flex flex-col items-center relative">
-      {/* Color palette header */}
-      <div className="w-full mb-2 p-2 bg-white border border-amber-300 rounded-t-md shadow-sm">
-        <div className="flex flex-wrap justify-center gap-2">
-          {colorPalette.map((paletteColor) => (
-            <button
-              key={paletteColor}
-              className={`w-8 h-8 rounded-md border ${
-                color === paletteColor ? 'border-black border-2' : 'border-gray-300'
-              }`}
-              style={{ backgroundColor: paletteColor }}
-              onClick={() => setColor(paletteColor)}
-              aria-label={`Select ${paletteColor} color`}
-            />
-          ))}
-        </div>
-      </div>
+
+      <ColorPicker onChange={setColor}/>
       
       {/* Canvas */}
       <div className="border border-amber-300 bg-white">
@@ -232,8 +237,8 @@ export default function DrawingCanvas() {
         <div 
           className="absolute z-10 bg-white border border-gray-300 rounded-md shadow-sm p-1 flex"
           style={{
-            left: `${selectedPixel.x * pixelSize + pixelSize/2}px`, 
-            top: `${selectedPixel.y * pixelSize + pixelSize/2}px`,
+            left: `${(selectedPixel.x * pixelSize + pixelSize/2) + 70}px`, 
+            top: `${(selectedPixel.y * pixelSize + pixelSize/2)}px`,
             transform: 'translate(-50%, -50%)'
           }}
         >

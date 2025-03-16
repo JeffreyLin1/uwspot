@@ -12,11 +12,8 @@ export default function Home() {
     <div className="flex min-h-screen flex-col bg-amber-50">
       <Navbar />
       
-      <div className="flex flex-1 flex-col items-center justify-center p-8">
-        <div className="max-w-2xl text-center">
-          <h1 className="text-5xl font-bold text-amber-600">UWSpot</h1>
-          
-          <div className="mt-8">
+      <div className="flex flex-1 flex-col items-center justify-center p-4 ">          
+          <div>
             <DrawingCanvas />
           </div>
           
@@ -52,6 +49,5 @@ export default function Home() {
           )}
         </div>
       </div>
-    </div>
   );
 }
